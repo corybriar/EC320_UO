@@ -1,0 +1,152 @@
+---
+title: 'Lab 1: R Basics'
+author: "YOUR NAME HERE"
+date: "3/29/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(tidyverse)
+```
+
+
+## Welcome to R!
+This quarter, we will be working in the programing language R, which is specifically designed for statistics. R is a powerful language that's relatively simple to understand, and used by economists (and others) the world round for professional research and development; it is designed to function similarly to Python and MATLAB. R is also an open source language, meaning that anyone can write code and publish downloadable functionality. It is available for free download to virtually any personal computer. This document is written in RMarkdown, which is essentially like a Word Document but with chunks of running R code.
+
+We will be using R with the graphical user interface (GUI) known as RStudio, also free. Think of RStudio as being like a wrapper than makes it easier to work with R. If you would like to download R and RStudio for your personal use, there's a great tutorial [*here*](http://happygitwithr.com). Today we will be familiarizing ourselves with R, RStudio, and coding basics, as well as look at some very simple statistics and graphs. Let's look at some R basics
+
+### Introduction to R
+R is what's called an **object oriented language (OOL)**; this means that R treats everything as an **object**. In computer languages, an object is simply a *name* that stores a *value*. The way to create an object is simply to write a name and assign a value using either `<-` or `=`. Once an object has been created, its value can change. For instance suppose I want to create an object `five` to hold the value `5`:
+```{r five}
+five <- 5
+five
+five <- 6
+five
+```
+Objects in R have different *classes*, which determines what type of actions can be done to it. For instance, if two objects `a` and `b` are numerical (class), then they can be multiplied together; but if one is a character string and the other is a number, they cannot be multiplied:
+```{r class, eval = F}
+a <- 4
+b <- 5
+a*b
+
+c <- "character string"
+a*c
+```
+You can see that `a*c` returns an error message, because a `non-numeric argument` (`c` is a string) to an operator (*). Strings can't be multiplied, numbers can't be `grepl` searched, etc. There are many types of classes in R, but besides the two we just looked at, the ones we'll need the most moving forward are:
+
+- **Functions** -- Functions are objects that take inputs and produce outputs. For instance, the function `mean()` is built into R; it takes an ordered collection of numbers (a *vector*) and computes the mean of them:
+```{r functions}
+vector <- c(1,2,3,4,5)
+mean(vector)
+```
+Functions can have any number of inputs and any number of outputs. Additionally, functions can be written/declared, confusingly enough, using the function `function()`. We'll write some functions later this quarter, but for now we'll just use the build in ones.
+
+ - **Data Frames** -- The easiest way to think of data frames is as an excel spread sheet. It's a matrix of data, where every column is another variable and every row is another observation. R has a lot of builtin data frames, and many packages that we call up also have nice tidy data. Let's have a look at one we'll work with some this quarter:
+```{r dfs}
+starwars
+```
+ Across the columns we have column names, `name`, `height`, etc... Every row constitutes a character from Starwars. You'll note that every variable in a dataframe has a class given in the `<____>`; a variable can only have one type. We can pull out specific variables from a data frame using a `$`:
+```{r}
+# See vector of character names
+starwars$name
+# Find the mean height of starwars characters
+mean(starwars$height, na.rm = T)
+# Find class of height
+class(starwars$height)
+# Find class of hair_color
+class(starwars$hair_color)
+```
+When we work with most data it will be in data frame format. We'll explore how to manipulate data frames and create new variables in future labs. Today, we'll focus on computing summary statistics and visualizing data.
+ 
+## Summarizing Data in R
+
+The first thing we should do when we encounter a new dataset in R is try to characterize the nature of our data. We should look at means, medians, modes, trends, scatterplots, etc. before we do anything else. So, since this is our first time working with data, let's see what kind of things we can say about our data before we truly begin to analyze it. 
+
+Another great built in function to R is the `summary()` function, which computes summary statistics for a vector of data, such as a variable in a data frame. Using what we've covered so far in lab, in the next code chunk, compute summary statistics for the variable `height` in `starwars`
+```{r summary}
+
+```
+Intuition check: if the median is greater than the mean, are there more super big or super small outliers? Answer in **bold**:
+
+Now use the `dim()` function to figure out how many variables and observations there are in `starwars`. `dim` takes a data frame as an input and spits out the number of rows followed by the number of columns. 
+```{r dim}
+
+```
+ - **Number of observations:**
+ - **Number of variables:**
+ 
+
+For the rest of the quarter we will be studying correlations and causality. There are a number of ways in which to do this of course. Suppose we want to investigate the relationship between height and mass; specifically, we might want to ask what happens to a character's weight as they get taller (in general). First, we should always have some intuition about how a relationship should work. For instance, would you expect taller characters to generally be heavier or lighter? **Why:**
+
+Perhaps one step up from that is to take a simple Pearson's *r* coefficient of correlation. Pearson's *r* is a statistic that is calculated for many observations of two variables, and gives a very quick and simple portrait on whether or not those two variables tend to move with each other. The formula for Pearson's *r* for two variables $x$ and $y$ is
+$$
+r = \frac{\sum (x_i - \bar{x})(y_i -\bar{y})}{\sqrt{\sum (x_i - \bar{x})^2\sum (y_i - \bar{y})^2}}
+$$
+If two variables always move together in the same direction, then $r\to 1$; if they always move in opposite directions together, then $r\to -1$; if the variables tend to have nothing to do with each others' movements, then $r\to 0$. In R, we can take find the $r$ of two variables using the `cor()` function. For instance, if I wanted to compute $r$ for $x$ and $y$, I would type `cor(x,y,use="complete.obs")`. Find $r$ for `mass` and `height` in the `starwars` data frame (dont worry about the `use = "complete.obs"` part, just use it in your code).
+```{r cor}
+
+```
+Check your intuition from above. Does Pearson's $r$ have the expected sign and size if your prediction was true? **Answer in bold**:
+
+
+Perhaps the most meaninful way to begin investigating relationships in data is to visualize them graphically! By far the most popular way to vizualize data in R (cause it's the best) is Hadley Wickham's `ggplot2` package. In R, packages are like little libraries of extra functions and data sets and other objects that have to be loaded into R every time you launch a new session. Most of the cool functionality of R actually comes from packages. `ggplot2` has a lot of really easy to use graphic tools that produce professional, concise and clear plots of just about any type. The first time you ever load a package into R, you have to install it. To do this, go to your console and enter `install.packages("ggplot2")`. Afterwards, you can load a package into R by using the `library()` function and listing the names of the packages you wish to load separated by commas. For now, just load `ggplot2`:
+```{r load_gg}
+
+```
+Our goal for this portion of lab will be to create a colored scatterplot of height and mass among characters in the `starwars` data frame. Generally if we see dots trending upwards, then taller characters tend to have more mass; if the dots trend downwards, then the opposite is true.
+
+The principle function inside `ggplot2` is called `ggplot`, and the way it gets used is highly unusual for functions. Essentially, a `ggplot` call consists of the `ggplot(data, aes(x,y))` which tells R what data set to work from (`data`) and which variables will be the $x$ and $y$ variables on your plot. Now to tell `ggplot` what to do with the data, what kind of graph we want to make, how to color and label it, etc. We do this by adding `geom`'s, appended with a $+$. For example:
+```{r gg_demo}
+ggplot(starwars, aes(x = height, y = mass)) + geom_line()
+```
+
+produces a rather useless graph that connects observations of height and weight with a line... of course this doesn't make much sense. Instead, take the above code and modify using `geom_point` instead of `geom_line` to create a scatterplot of our data below:
+```{r scatter1}
+ggplot(starwars, aes(x = height, y = mass)) + geom_point()
+
+```
+
+That's better... but we can make it nicer to be sure. For one thing, we have an extreme outlier (Jabba the Hut) that makes it hard to read the rest of the graph. We'll learn how to get rid of observations like these next week, but for now I'm just going to do it for you by creating a new data rame identical to `starwars` but without Jabba; we'll use this new data frame, `sw` for the rest of lab
+
+```{r sw}
+sw <- starwars %>% filter(name != "Jabba Desilijic Tiure")
+```
+
+Also, the black against white theme is kinda hard to look at. Pick a new color (most names will work). Also, where it says `alpha = `, pick a number between 0 and 1, 0 being transparent and 1 being completely solid. Finally, where it says labels, give your graph and axes labels:
+
+```{r scatter2}
+ggplot(sw, aes(x = height, y = mass)) + 
+  geom_point(alpha = , color = "red") +
+  labs(title = "",
+       x = "",
+       y = "")
+```
+
+We can also add even more variables to our graph. Suppose for instance we also wanted to know how old characters are by the size of the dots. I can modify my code from before slightly, slipping a `size = birth_year` into the `aes()` wrapper in the `ggplot` function. This tells R to map the aesthetic of dot sizes to depend on the variable `birth_year` (age) in the data frame `sw`. Observe:
+
+```{r size_scatter}
+ggplot(sw, aes(x = height, y = mass, size = birth_year)) + 
+  geom_point(alpha = 0.5, color = "blue") +
+  labs(title = "",
+       x = "Height",
+       y = "Mass",
+       size = "Age")
+```
+
+We'll use `ggplot2` a lot throughout the quarter, so try to get comfortable with it. There's a great [*cheatsheet*]() resource for discovering more functionality with the package; I use it all the time for GIS mapping for instance.
+
+
+For now though, one final question: return to your intuition earlier about height and mass, and the correlation coefficient you took. In looking at your scatterplots, does it appear as if your intuition was generally correct? Does your graph make sense with the $r$ statistic you calculated earlier? **Explain:**
+
+
+
+
+That's the end of lab today. For now, replace YOUR NAME HERE with your name at the top of the document and knit your document. Upload the corresponding html to Canvas under Lab 1 and have an excellent rest of your week!
+
+
+

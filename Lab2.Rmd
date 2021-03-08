@@ -1,0 +1,151 @@
+---
+title: 'Lab 2: Simple Regression'
+author: "YOUR NAME HERE"
+date: "3/7/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(tidyverse)
+```
+
+## Introduction 
+
+In this lab we will use R to run some basic regressions using the `starwars` dataframe from the previous lab. Specifically, we will investigate the relationship between height and weight, by estimatimating a single variable regression. We will also be producing some graphs to build intuition and practicing manipulating data frames. Our goal will to be to estimate the equation
+$$ mass_i = \beta_1 + \beta_2height_i + u_i$$
+and reproduce the following graph
+```{r figure, echo = F}
+sw <- starwars %>% filter(mass < 1000)
+
+reg_sw <- lm(mass~height, sw)
+sw$fitted <- coef(summary(reg_sw))[1] + coef(summary(reg_sw))[2]*sw$height
+
+sw %>% ggplot(aes(x=height)) + geom_point(aes(y=mass), color = "blue", alpha = 0.6) +
+  geom_line(aes(y=fitted)) +
+  labs(title = "Heights and Mass of Starwars Characters",
+       subtitle = "Linear Regression Estimated via OLS",
+       x = "Height",
+       y = "Mass")
+
+```
+
+which depicts the estimated regression superimposed on the underlying data. To get there though, we're going to need to manipulate the `starwars` data frame using some functionality from various packages. Let's spend sometime getting to know R before we dive into econometrics proper!
+
+## Part 1: Loading in Packages
+
+As mentioned last week, there's not actually *that* much functionality built directly into **R Base** (what comes preloaded in R when you install it); a lot of the cool stuff in R comes from packages, which are basically downloadable R code that gives you some more tools to conduct data analysis. There are literally 1000's of these, anyone can write and publish one, but there is a core set of maybe 50 that everyone tends to use. We've already seen some packages; last week we looked at `ggplot2` for graphing. This week, we're gonna need to load in a few packages that help us manipulate data frames. 
+
+Before that though, let's talk about `pacman`. `pacman` is a package management package that makes it easier to load in packages, even if they haven't been installed. Recall that you can install a package using `install.packages("XXX")` in the console where XXX is the name of the package. Install `pacman` and then use the following code chunk to load it into our R environment:
+```{r}
+library(pacman)
+```
+
+`pacman` has a key function called `p_load` that lets us not only load multiple packages at once, but also install any that *haven't previously been installed*. This gets around all sorts of `Error in library(XXX) : there is no package called ‘XXX’` messages when sharing code between machines. Anyway, the packages we'll be needing today can be loaded by the following code chunk:
+```{r}
+p_load(plyr, dplyr, purrr, ggplot2, stargazer)
+```
+
+`ggplot2` we've seen before, but briefly the other three all give us a set of functions that allow us to manipulate data. `dplyr` and `plyr` allow us to *pry* apart data frames and transform them, and `purrr` makes code flow together a little more easily (it makes code *purr* I guess); `stargazer` makes it easier to view regression results... you'll see why `stargazer` shortly. Also, if you haven't caught on by now, there's a culture of naming packages punnily and ending them with `r` instead of `er`. Cause R.
+
+## Part 2: Data Cleaning
+
+The reality of econometric research is that you spend about 10% of your time designing models/procedures/experiments, etc., and 90% of your time data wrangling/cleaing (getting data/making data easy to work with). We'll mostly be working with some pretty tame data sets in this class, but no matter how clean your data is, you're inevitably going to have to working with subsets of it, or transform existing variables into new variables, or or or... 
+
+We saw last week, that there is a huge outlier in this dataset: Jabba the Hut, who despite being only slightly taller than usual, weights like 5 times what anyone else does.
+instead of `geom_line` to create a scatterplot of our data below:
+```{r scatter1}
+ggplot(starwars, aes(x = height, y = mass)) + geom_point()
+
+```
+Recall that our goal is going to be to conduct a regression of height on mass from this data frame. OLS, as described in class, gives a lot of weight to outliers... but that's not always a good thing. It's clear from this scatter that there's a pretty simple looking linear relationship between height and mass, and then some abberation, nothing to be learned from. So let's get rid of that observation. The way we're gonna do that is with the `filter()` function from `dplyr`. `filter()` takes two inputs: the first is a data frame, and the second is a **logical** expression about variables, something that is either definitely true or definitely false. What `filter()` then does with this information is to create a new data frame containing only observations meeting that logical expression. For instance if I wanted to filter `starwars` to contain only those characters taller than 200 cm, I could do the following:
+```{r}
+sw200 <- filter(starwars, height > 200)
+sw200
+```
+
+You'll note this data frame contains only 8 observations instead of the 87 in `starwars`. Here, the logical condition is `height > 200`. I need the `sw200<-` to save the data frame to the R environment. From looking at the last scatter plot, it's pretty clear that Jabba is the only character with mass > 1000. So if we wanna eliminate him, all we need to do is `filter()` out all characters with `mass > 1000`. Do this in the following code chunk, and save the new object as `sw`:
+```{r}
+
+```
+
+Sometimes we want to apply multiple `plyr` functions at once. For instance, `select` allows us to drop variables we don't need; let's get rid of all the variables in `starwars` except height, mass, and name. Typically we would have done this with the previous step, like this:
+```{r}
+sw <- select(filter(starwars, mass < 1000), name, height, mass)
+sw
+```
+
+Okay but that code is **REALLY** hard to read; typically when you do data cleaning, you're using like 10+ of these functions together... There's an easier way. 
+
+From the `purrr` package, we have what's called the *piping* function, `%>%`. This set of characters is actually a unary operator, like a `+,-,/,*,!`, etc. Essentially it takes whatever object is on the left and puts it into a function on the right in the first argument. For example,
+```{r}
+sw <- starwars %>% filter(mass < 1000)
+```
+
+You'll note that that last operation just undid the `select()` previously. In the code chunk below, create an object called `sw` that contains only the variables `name`, `height` and `mass`, and does containes only those with `mass < 1000` using the `%>%` function to send `starwars` first to a filter command, and then a select command. Here's some starter code:
+```{r}
+swb <- starwars %>%
+  filter() %>%
+  select()
+sw
+```
+
+That's enough data cleaning for now, let's regress!
+
+## Part 3: Regression Analysis
+
+Running regressions nowadays is stupid easy, as compared to the horrors of conducting them by hand as recently as the stoneage. In R, the simplest way to run a regression is using the `lm()` function (`lm` stands for linear model). This function takes a regression formula based on variable names, followed by a data frame where the variables come from. For example, if I wanted to estimate $Y = \beta_1 + \beta_2X + u$, I would write `reg <- lm(y ~ x, df)`. It returns an object called a *regression object*, which is a type of data frame that is not at all intuitive, and so we like to use other functions to view them, such as `stargazer()`. 
+
+Recall that we are trying to obtain estimates for $\beta_1$ and $\beta_2$ for the following regression:
+$$
+mass_i = \beta_1 + \beta_2 height_i + u_i
+$$
+Use the generic formula given in the previous paragraph and the variables `mass` and `height` within the data frame `sw` to estimate this regression via OLS. Call the resulting regression object `reg`.
+```{r}
+reg <- lm(mass ~ height, sw)
+```
+
+If you did the previous code chunk correctly, the following one should allow you to see your results.
+
+```{r}
+stargazer(reg, type = "text")
+```
+
+**How to read this:**
+
+- The value listed next to `height` is the estimated value of $\beta_2$, and likewise next to `constant` is the estimate for $\beta_1$.
+- In the parentheses below the point estimates are the standard error estimates, $\hat{SE}(\hat{\beta}_1)$ and $\hat{SE}(\hat{\beta}_1)$
+- At the very bottom, you'll see a key to the stars next to the point estimates; three *'s denotes an attained p-value of less that 0.01 (highly significant), two denotes 0.05 (significant), and one denotes 0.10 ("promising preliminary results"). This is where the name `stargazer` comes from.
+- In the block below the point estimates, we see some additional common summary stats for a regression, $n$, $R^2$, adjusted $R^2$, residual standard error, and the $F$-stat, which is identical to a $t$-stat here.
+
+Now let's check ourselves, does this regression look good (**answer**)
+
+- **Does $\hat{\beta}_2$ have the expected sign?**
+- **How should we interpret the point estimate $\hat{\beta}_2$ in terms of units of mass (kilograms) and units of height (centimeters). Is the size of $\hat{\beta}_2$ reasonable?**
+- **Interpret the $R^2$ for this regression. Does the $R^2$ for this regression seem reasonable?**
+
+We're almost done, but we still need to visualize our regression graphically! To do this, we're going to add a variable to our `sw` dataframe, our predicted values of `mass` from our regression. To do this, we're going to use two functions:
+
+- `predict()`, which takes a regression object and spits out the predicted values for the regression
+- `mutate()`, which is a `dplyr` function that creates new variables out of existing variables or objects. The first argument is a data frame, and the second is a formula. For instance, I could create a new variable called `height2` that was simply $height^2$ using the following:
+```{r}
+sw %>% mutate(height2 = height^2)
+```
+You can also create multiple variables in the same `mutate()`, separating each formula with a `'`.
+
+Just to demonstrate how cool` %>% ` is, we're gonna do the `mutate()` and `ggplot()` all in a single line of code (though it will span multiple lines of text). Inside the `mutate()` function, use the `predict()` function to create a new variable in `sw` called `mass_hat` Oh god I just typed that out, I kinda feel like should change it but it happened too organically to delete it. Anyway, fill in the blanks where I've commented in #'s . Note that I've assigned different `x` variables to different `geom` types to get both `mass` and `mass_hat` on the same graph.
+
+```{r}
+sw %>% mutate(mass_hat = ) %>% # use predict() to find mass_hat
+  ggplot(aes(x = height)) +
+  geom_point(aes(y = mass), alpha = 0.6, color = "blue") + 
+  geom_line(aes()) + # based on the previous line, what should go into the aes() wrapper?
+  labs(title = "Heights and Mass of Starwars Characters",
+       subtitle = "Linear Regression Estimated via OLS",
+       x = "Height",
+       y = "Mass")
+```
+
+That's the end of lab today. For now, replace YOUR NAME HERE with your name at the top of the document and knit your document. Upload the corresponding html to Canvas under Lab 2 and have an excellent rest of your week!
+
