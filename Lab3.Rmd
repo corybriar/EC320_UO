@@ -1,0 +1,175 @@
+---
+title: 'Lab 3: Classical Assumptions and Hyp. Testing'
+author: "YOUR NAME HERE"
+date: "3/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## Introduction
+
+Today we'll be conducting a series of regressions, investigating our 6 classical assumptions and conducting some hypothesis tests. We'll be working with data in a package called `gapminder`, which contains historical data on the majority of countries around the world on per capita GDP andlife expectancy. It's a very popular data frame within R, and used for a lot of cool data visualizations. We'll be using it to depict some violations of classical assumptions and run some simple hypothesis tests.
+
+First, in the following code chunk, use the `p_load()` function from `pacman` to load the following packages: `tidyverse`, `stargazer`, `gapminder`
+```{r}
+
+```
+
+`tidyverse` is actually a suite of packages, including `ggplot2`, `dplyr`, `plyr`, and `purrr`, and a whole concept in and of itself within R. We won't get too into it though this quarter. 
+
+## Part 1: Naive Regression
+
+**FULL DISCLOSURE:** I'm going to set us up to fail in this section to demonstrate the importance of thorough regression analysis. 
+
+Let's have a look at the `gapminder` dataframe:
+```{r}
+gapminder
+```
+
+We have a nice clean data frame to work with, 6 variables wide: we have country name, continent, year of the observation, life expectancy in years, population, and GDP per capital, which is simply the average income of all earners in the country in question. 
+
+- **Quickly: what type of data is this, crosssectional, time series, or panel?** 
+
+Suppose we want to conduct the following regression:
+$$
+lifeExp_{i} = \beta_1 + \beta_2gdpPercap + u_i
+$$
+
+- **What sign should we expect $\beta_2$ to be?** 
+
+So in the interest of eagerness, let's jump in and estimate this! Use the `lm()` from last lab, and call the resulting regression object `reg1`; use `startgazer` to have a look at it afterwards:
+```{r}
+
+```
+
+Let's check ourselves as always:
+
+- **Does $\beta_2$ have the expected sign?** 
+- **Is the size of $\beta_2$ believable?** 
+- **Does $R^2$ seem too big?** 
+
+Finally, based on the results of this regression, **would you say that GDP per capita, on average, has an impact on life expectancy?** 
+
+## Part 2: The Classical Assumptions
+
+I mentioned at the start of the last section that I was setting us up to fail. What did we do wrong? For one thing we dove into a regression without really visualizing or summarizing the data; for another we really didn't think about the relationship between life expectancy and GDP per capita... Is it linear (A1)? Are sure the error is normally distributed (A6)? Is the data homoskedastic (A4)? We didn't consider any of these things before assuming a nice linear model with normal errors. Bear in mind, if any of the classical assumptions are violated, we've just run a regression that produces non-BLUE estimates.
+
+To see where we went wrong, consider the following plot of the `gapminder` data:
+```{r}
+gapminder %>%
+  ggplot(aes(x = gdpPercap, y = lifeExp)) +
+  geom_point(aes(color = continent), alpha = 0.4) + 
+  geom_smooth(method = 'lm', color = "black") + 
+  labs(title = "Life Expectancy by GDP Per Capita",
+       subtitle = "1952-2007",
+       x = "GDP Per Capita (USD)",
+       y = "Life Expectancy (years)",
+       color = "Continent")
+
+```
+
+**Does this data LOOK linear?** 
+
+This should make sense. You think about doubling someone's income from \$1000 to \$2000 might raise their life expectancy a number of years, from say 40 to 50. But by the time you have \$50,000 in income, you're running up against the biological limit set on human life, not the financial one. Hence, we should expect that the relationship between life expectancy and GDP per capita is non-linear.
+
+- **Which classical assumption have we violated?** 
+- **How will our estimates suffer if that assumption is violated?** 
+
+It just so happens that relationships that follow that "Crashing Wave" pattern when plotted tend to be linear in the logs; meaning if we instead estimate 
+$$
+\log(lifeExp_{i}) = \beta_1 + \beta_2\log(gdpPercap_i) + u_i
+$$
+Essentially, the underlying data generating process is actually $lifeExp = \gamma_1* gdpPercap^{\gamma_2}*e_i$; taking the log of both sides makes it linear so that we can estimate with OLS. In the following code chunk, use the `log()` function around each of the variables to estimate the above equation. Call the resulting regression object `reg2` and have a look at it with `stargazer`.
+```{r}
+
+```
+
+Let's check ourselves as always:
+
+- **Does $\beta_2$ have the expected sign?** 
+- **Is the size of $\beta_2$ believable?** 
+- **Does $R^2$ seem too big?** 
+
+Finally, based on the results of this regression, **would you say that GDP per capita, on average, has an impact on life expectancy?** 
+
+Let's have one more visualization before we move on; here's our second regression superimposed on the logged data:
+```{r}
+gapminder %>%
+  ggplot(aes(x = log(gdpPercap), y = log(lifeExp))) +
+  geom_point(aes(color = continent), alpha = 0.4) + 
+  geom_smooth(method = 'lm', color = "black") + 
+  labs(title = "Life Expectancy by GDP Per Capita",
+       subtitle = "1952-2007",
+       x = "GDP Per Capita (USD)",
+       y = "Life Expectancy (years)",
+       color = "Continent")
+
+```
+
+**Does it appear that we might be violating any classical assumptions? If so, what will be the consequences to our estimators?** 
+
+## Part 3: Hypothesis Testing
+
+We'll take `reg2` to be our canonical model (let's just pretend it's 100% correct). In this section, we will quickly, by hand, conduct the same $t$-test conducted by the `lm()` function on $\beta_2$. The purpose of this exercise is to familiarize you with different more technical aspects of R as a computer language while demonstrating that `lm()` is not magic. 
+
+We wish to test whether GDP per capita has any impact on life expectancy my testing the null hypothesis
+$$ H_0:\; \beta_2 = \beta_2^0$$
+**For this t-test, what should we set $\beta_2^0$ equal to?** 
+
+Recall that our $t$-test statistic is given by 
+$$
+t = \frac{\hat{\beta}_2 - \beta_2^0}{\textrm{s.e.}(\hat{\beta_2})}
+$$
+First we need to pull out our estimate from `reg2`. Create an object called `beta2hat` that stores the estimated value.
+
+```{r}
+
+```
+
+Now we have $\hat{\beta}_2$ and $\beta_2^0$ in hand, all we need is $\textrm{s.e.}(\hat{\beta}_2)$. Of course, that this is the hardest object in our $t$-stat to recover, but still pretty easy given R's functionality. Recall that the formula for $\textrm{s.e.}(\hat{\beta}_2)$ is given by
+$$
+\textrm{s.e.}(\hat{\beta}_2) = \sqrt{\frac{\hat{\sigma}_u^2}{\sum_i(X_i - \bar{X})^2}}
+$$
+where
+$$
+\hat{\sigma}_u^2 = \frac{1}{n-2}\sum_i \hat{u}_i^2
+$$
+So we need two piece of information: $n$ and $\sum_i \hat{u}_i^2$. You can find $n$ using the `dim()` function on `gapminder`; store this value as $n$:
+```{r}
+
+```
+For the second bit, we have a little bit of work to do. Backstory: R is what's called a vectorized language, meaning that if you feed a whole string of numbers to a function, the function will return a string of numbers each individually operated on by the function (it's more complicated than that, but that's all we need rn). For instance:
+```{r}
+vec <- c(1,2,3,4,5)
+vec^2
+```
+Now we can obtain a vector of our residuals from `reg2` using the `resid()` function; we can then square those residuals using `^2` and sum them up using `sum()`. There's a couple ways to do this, but using these functions and `reg2`, create an object called `sigmahat` equal to the 
+```{r}
+
+```
+Now we have all the pieces for the standard error of $\hat{\beta}_2$. The following code chunk should assemble them:
+```{r}
+
+```
+Now that we have all the pieces of `t`, assemble them into our $t$-stat. Do so below:
+```{r}
+
+```
+Use the `qt()` function to find the 95% critical value for the test. `qt()` takes two inputs, the first is the fraction of distribution you want to be less than your $t$-stat, and the second is the degrees of freedom.
+```{r}
+
+```
+**Based on your $t$-stat and the critical value just obtained, should you reject or fail to reject the null hypothesis that GDP/capita has nothing to do with life expectancy?** 
+
+Finally, use the `pt()` function to find the attained significance for $\hat{\beta}_2$. `pt()` takes a $t$-stat as its first argument and degrees of freedom, and returns *the proportion of t-scores below that t-score*.
+```{r}
+
+```
+**Based on the attained significance ($p$-value), how many stars should your point estimate get?** 
+
+
+That's the end of lab today. For now, replace YOUR NAME HERE with your name at the top of the document and knit your document. Upload the corresponding html to Canvas under Lab 2 and have an excellent rest of your week!

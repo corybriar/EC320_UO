@@ -1,5 +1,5 @@
 ---
-title: 'Lab 2: Simple Regression'
+title: "Lab 2 Key"
 author: "YOUR NAME HERE"
 date: "3/7/2021"
 output: html_document
@@ -64,8 +64,10 @@ sw200 <- filter(starwars, height > 200)
 sw200
 ```
 
+
 You'll note this data frame contains only 8 observations instead of the 87 in `starwars`. Here, the logical condition is `height > 200`. I need the `sw200<-` to save the data frame to the R environment. From looking at the last scatter plot, it's pretty clear that Jabba is the only character with mass > 1000. So if we wanna eliminate him, all we need to do is `filter()` so we only have characters with `mass < 1000`. Do this in the following code chunk, and save the new object as `sw`:
 ```{r}
+sw <- filter(starwars, mass <1000)
 ```
 
 Sometimes we want to apply multiple `plyr` functions at once. For instance, `select` allows us to drop variables we don't need; let's get rid of all the variables in `starwars` except height, mass, and name. Typically we would have done this with the previous step, like this:
@@ -73,6 +75,7 @@ Sometimes we want to apply multiple `plyr` functions at once. For instance, `sel
 sw <- select(filter(starwars, mass < 1000), name, height, mass)
 sw
 ```
+
 
 Okay but that code is **REALLY** hard to read; typically when you do data cleaning, you're using like 10+ of these functions together... There's an easier way. 
 
@@ -84,8 +87,8 @@ sw <- starwars %>% filter(mass < 1000)
 You'll note that that last operation just undid the `select()` previously. In the code chunk below, create an object called `sw` that contains only the variables `name`, `height` and `mass`, and does containes only those with `mass < 1000` using the `%>%` function to send `starwars` first to a filter command, and then a select command. Here's some starter code:
 ```{r}
 sw <- starwars %>%
-  filter() %>%
-  select()
+  filter(mass <1000) %>%
+  select(name, height, mass)
 sw
 ```
 
@@ -101,8 +104,9 @@ mass_i = \beta_1 + \beta_2 height_i + u_i
 $$
 Use the generic formula given in the previous paragraph and the variables `mass` and `height` within the data frame `sw` to estimate this regression via OLS. Call the resulting regression object `reg`.
 ```{r}
-
+reg <- lm(mass ~ height, sw)
 ```
+
 
 If you did the previous code chunk correctly, the following one should allow you to see your results.
 
@@ -119,9 +123,9 @@ stargazer(reg, type = "text")
 
 Now let's check ourselves, does this regression look good (**answer**)
 
-- **Does $\hat{\beta}_2$ have the expected sign?**
-- **How should we interpret the point estimate $\hat{\beta}_2$ in terms of units of mass (kilograms) and units of height (centimeters). Is the size of $\hat{\beta}_2$ reasonable?**
-- **Interpret the $R^2$ for this regression. Does the $R^2$ for this regression seem reasonable?**
+- **Does $\hat{\beta}_2$ have the expected sign?** *Yes*
+- **How should we interpret the point estimate $\hat{\beta}_2$ in terms of units of mass (kilograms) and units of height (centimeters). Is the size of $\hat{\beta}_2$ reasonable?** *On average, every cm a starwars character grows taller, they gain 0.621 kgs.*
+- **Interpret the $R^2$ for this regression. Does the $R^2$ for this regression seem reasonable?** *Yes, it makes sense that height alone could explain about 60% of the variation in mass*
 
 We're almost done, but we still need to visualize our regression graphically! To do this, we're going to add a variable to our `sw` dataframe, our predicted values of `mass` from our regression. To do this, we're going to use two functions:
 
@@ -130,15 +134,16 @@ We're almost done, but we still need to visualize our regression graphically! To
 ```{r}
 sw %>% mutate(height2 = height^2)
 ```
+
 You can also create multiple variables in the same `mutate()`, separating each formula with a `'`.
 
 Just to demonstrate how cool` %>% ` is, we're gonna do the `mutate()` and `ggplot()` all in a single line of code (though it will span multiple lines of text). Inside the `mutate()` function, use the `predict()` function to create a new variable in `sw` called `mass_hat` Oh god I just typed that out, I kinda feel like should change it but it happened too organically to delete it. Anyway, fill in the blanks where I've commented in #'s . Note that I've assigned different `x` variables to different `geom` types to get both `mass` and `mass_hat` on the same graph.
 
 ```{r}
-sw %>% mutate(mass_hat = ) %>% # use predict() to find mass_hat
+sw %>% mutate(mass_hat = predict(reg)) %>% # use predict() to find mass_hat
   ggplot(aes(x = height)) +
   geom_point(aes(y = mass), alpha = 0.6, color = "blue") + 
-  geom_line(aes()) + # based on the previous line, what should go into the aes() wrapper?
+  geom_line(aes(y = mass_hat)) + # based on the previous line, what should go into the aes() wrapper?
   labs(title = "Heights and Mass of Starwars Characters",
        subtitle = "Linear Regression Estimated via OLS",
        x = "Height",

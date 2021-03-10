@@ -1,7 +1,7 @@
 ---
-title: 'Lab 1: R Basics'
+title: "Lab 1 Key"
 author: "YOUR NAME HERE"
-date: "3/29-30/2021"
+date: "3/29/2021"
 output: html_document
 ---
 
@@ -61,6 +61,7 @@ class(starwars$height)
 # Find class of hair_color
 class(starwars$hair_color)
 ```
+
 When we work with most data it will be in data frame format. We'll explore how to manipulate data frames and create new variables in future labs. Today, we'll focus on computing summary statistics and visualizing data.
  
 ## Summarizing Data in R
@@ -69,19 +70,18 @@ The first thing we should do when we encounter a new dataset in R is try to char
 
 Another great built in function to R is the `summary()` function, which computes summary statistics for a vector of data, such as a variable in a data frame. Using what we've covered so far in lab, in the next code chunk, compute summary statistics for the variable `height` in `starwars`
 ```{r summary}
-
+summary(starwars$height)
 ```
-Intuition check: if the median is greater than the mean, are there more super big or super small outliers? Answer in **bold**:
 
 Now use the `dim()` function to figure out how many variables and observations there are in `starwars`. `dim` takes a data frame as an input and spits out the number of rows followed by the number of columns. 
 ```{r dim}
-
+dim(starwars)
 ```
- - **Number of observations:**
- - **Number of variables:**
+ - **Number of observations:** *87*
+ - **Number of variables:** *13*
  
 
-For the rest of the quarter we will be studying correlations and causality. There are a number of ways in which to do this of course. Suppose we want to investigate the relationship between height and mass; specifically, we might want to ask what happens to a character's weight as they get taller (in general). First, we should always have some intuition about how a relationship should work. For instance, would you expect taller characters to generally be heavier or lighter? **Why:**
+For the rest of the quarter we will be studying correlations and causality. There are a number of ways in which to do this of course. Suppose we want to investigate the relationship between height and mass; specifically, we might want to ask what happens to a character's weight as they get taller (in general). **First, we should always have some intuition about how a relationship should work. For instance, would you expect taller characters to generally be heavier or lighter? Why:** *Heavier, they literally have more matter to them the taller they are, holding width and composition constant. This literally means more mass*
 
 Perhaps one step up from that is to take a simple Pearson's *r* coefficient of correlation. Pearson's *r* is a statistic that is calculated for many observations of two variables, and gives a very quick and simple portrait on whether or not those two variables tend to move with each other. The formula for Pearson's *r* for two variables $x$ and $y$ is
 $$
@@ -89,14 +89,14 @@ r = \frac{\sum (x_i - \bar{x})(y_i -\bar{y})}{\sqrt{\sum (x_i - \bar{x})^2\sum (
 $$
 If two variables always move together in the same direction, then $r\to 1$; if they always move in opposite directions together, then $r\to -1$; if the variables tend to have nothing to do with each others' movements, then $r\to 0$. In R, we can take find the $r$ of two variables using the `cor()` function. For instance, if I wanted to compute $r$ for $x$ and $y$, I would type `cor(x,y,use="complete.obs")`. Find $r$ for `mass` and `height` in the `starwars` data frame (dont worry about the `use = "complete.obs"` part, just use it in your code).
 ```{r cor}
-
+cor(starwars$height,starwars$mass, use = "complete.obs")
 ```
-Check your intuition from above. Does Pearson's $r$ have the expected sign and size if your prediction was true? **Answer in bold**:
+**Check your intuition from above. Does Pearson's $r$ have the expected sign and size if your prediction was true?** *Yes it does*
 
 
 Perhaps the most meaninful way to begin investigating relationships in data is to visualize them graphically! By far the most popular way to vizualize data in R (cause it's the best) is Hadley Wickham's `ggplot2` package. In R, packages are like little libraries of extra functions and data sets and other objects that have to be loaded into R every time you launch a new session. Most of the cool functionality of R actually comes from packages. `ggplot2` has a lot of really easy to use graphic tools that produce professional, concise and clear plots of just about any type. The first time you ever load a package into R, you have to install it. To do this, go to your console and enter `install.packages("ggplot2")`. Afterwards, you can load a package into R by using the `library()` function and listing the names of the packages you wish to load separated by commas. For now, just load `ggplot2`:
 ```{r load_gg}
-
+library(ggplot2)
 ```
 Our goal for this portion of lab will be to create a colored scatterplot of height and mass among characters in the `starwars` data frame. Generally if we see dots trending upwards, then taller characters tend to have more mass; if the dots trend downwards, then the opposite is true.
 
@@ -105,12 +105,12 @@ The principle function inside `ggplot2` is called `ggplot`, and the way it gets 
 ggplot(starwars, aes(x = height, y = mass)) + geom_line()
 ```
 
+
 produces a rather useless graph that connects observations of height and weight with a line... of course this doesn't make much sense. Instead, take the above code and modify using `geom_point` instead of `geom_line` to create a scatterplot of our data below:
 ```{r scatter1}
 ggplot(starwars, aes(x = height, y = mass)) + geom_point()
 
 ```
-
 That's better... but we can make it nicer to be sure. For one thing, we have an extreme outlier (Jabba the Hut) that makes it hard to read the rest of the graph. We'll learn how to get rid of observations like these next week, but for now I'm just going to do it for you by creating a new data rame identical to `starwars` but without Jabba; we'll use this new data frame, `sw` for the rest of lab
 
 ```{r sw}
@@ -121,10 +121,10 @@ Also, the black against white theme is kinda hard to look at. Pick a new color (
 
 ```{r scatter2}
 ggplot(sw, aes(x = height, y = mass)) + 
-  geom_point(alpha = , color = "red") +
-  labs(title = "",
-       x = "",
-       y = "")
+  geom_point(alpha = 0.6, color = "red") +
+  labs(title = "Height and Mass of Selected Starwars Characters",
+       x = "Height",
+       y = "Mass")
 ```
 
 We can also add even more variables to our graph. Suppose for instance we also wanted to know how old characters are by the size of the dots. I can modify my code from before slightly, slipping a `size = birth_year` into the `aes()` wrapper in the `ggplot` function. This tells R to map the aesthetic of dot sizes to depend on the variable `birth_year` (age) in the data frame `sw`. Observe:
@@ -147,6 +147,21 @@ For now though, one final question: return to your intuition earlier about heigh
 
 
 That's the end of lab today. For now, replace YOUR NAME HERE with your name at the top of the document and knit your document. Upload the corresponding html to Canvas under Lab 1 and have an excellent rest of your week!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
