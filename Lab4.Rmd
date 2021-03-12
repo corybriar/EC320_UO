@@ -1,0 +1,150 @@
+---
+title: 'Lab 4: Multiple Regression'
+author: "YOUR NAME HERE"
+date: "7/5/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+The purpose of this lab will be to introduce hypothesis testing and multiple regression in a computational setting. We will be working with data from the book, `EAWE01.csv`; make sure to download this `csv` file from canvas in addition to this document. 
+
+The following chunk of code will load in the requisite packages for this lab.
+
+```{r load}
+pacman::p_load(tidyverse, stargazer, readr)
+```
+
+## Part 1: Reading in the Data
+
+Download the dataset called `EAWE01.csv` into the same folder as this markdown file and run the following line of code:
+
+```{r}
+wages <- read_csv("EAWE01.csv")
+```
+
+This should create a dataframe called `wages` that contains the data from this week's in class examples. In the following sections, we will investigate the relationship between schooling `S` and earnings `EARNINGS`. Normally, we'd have to spend a lot of time cleaning and preparing the data, but this set is pretty clean already.
+
+Now, let's have a look at the data. In the console, use `view(wages)` to have a look at the dataset. How many observations are there? How many variables? 
+
+**Number of observations:** *500*
+
+**Number of variables:** *96*
+
+Now use the `summary()` command to find the summary statistics of the variables `EARNINGS` and `S` in the following code chunk. Recall that you can interact with variables from a dataframe using \$ notation: `dataframe_name$variable_name`.
+
+```{r summary_stats}
+
+```
+
+## Part 2: A Simple Model
+
+Now we will estimate a simple regression of the form
+$$\hat{EARNINGS}_i = \hat{\beta}_1 + \hat{\beta}_2S_i $$
+
+To do this, recall that the `lm()` "linear model" command can be used to estimate linear regressions via OLS. For instance, `lm(y~x, data)` would estimate
+$$\hat{y}_i = \hat{\beta}_1 + \hat{\beta}_2x_i $$
+if `x` and `y` were variables in a dataframe called `data`. What you need to do is replace `y`, `x`, and `data` with the appropriate object names in the `lm()` formula and write that into the code chunk below:
+
+```{r}
+# Create object reg_se to store regression results
+reg_1 <- lm()
+# Display results
+stargazer(reg_1, type = "text")
+```
+
+Look at the results of the regression and answer the following questions: 
+
+1. **Based on what you know about evaluating a regression, does this look good to you? Be sure to mention the size and sign of the estimated coefficient on S and the R-sqaured value:**
+
+2. **Can you reject the null at the 95% confidence level that $\beta_2 = 0$?**
+
+## Part 3: Multiple Regression
+
+We know from class that this is a very simple model, and that ultimately we need to use more variables to atone for omitted variable bias. Let's see what happens to our regression results when we include more explanatory variables. To begin with, let's estimate the following model:
+
+$$\hat{EARNINGS}_i = \hat{\beta}_1 + \hat{\beta}_2S_i + \hat{\beta}_3EXP_i$$
+Where $EXP$ is the years of experience individual $i$ has after completing their years of schooling. To estimate this, repeat the process from Part 2, again using the `lm` function. Note that we can add regressors from a dataframe by writing `lm(Y ~ X1 + X2 + X3, data)` if `X1`, `X2`, and `X3` are all variables in a dataframe called `data`:
+
+```{r}
+reg_2 <- lm()
+stargazer(reg_2, type = "text")
+```
+
+Based on these new results, answer the two following questions:
+
+1. **Compare your estimate of $\beta_2$ in this regression to the simple regression you estimated earlier, `reg_1`; do you think there's evidence of omitted variable bias in the simple regression case?**
+
+2. **Note that the standard error of $\hat{\beta}_2$ is higher in the multiple regression than it was in the simple regression; what do you think caused this?**
+
+Now it's your turn. Pick 2 more variables from the `wages` data frame to add to the regression. Remember you can look for variables using the `view()` or `View()` function (I recommend the second). Call the resulting regression object `reg_3`. Some of the variable names are not immediately clear, so feel free to ask me about them and I'll do my best to figure them out. Kudos to whoever can find the weirdest ones. 
+
+```{r}
+
+```
+
+**Compare these results to `the schooling and experience model you estimated in `reg_2`. Is there evidence that there was omitted variables bias in that `reg_2`?**
+
+## Part 4: Multicollinearity
+
+You will note that between regressions 1 and 2, the standard error of $\hat{\beta}_2$ increased from 0.1664 to 0.2027. This is likely because schooling and work experience are correlated negatively. We can check for correlation using the `cor()` command:
+
+```{r}
+cor(wages$S, wages$EXP)
+```
+
+Sure enough, it looks like the two variables are significantly correlated. This makes sense: the more years a person spends in school, the less experience they have in the working world. Therefore, more school `S` means less experience `EXP`. We know from class that any regression containing `S` and `EXP` will then suffer from multicollinearity; this is thec cause of the increase in the standard error between regressions 1 and 2. 
+
+You almost certainly found in regression 3 that adding more variables did not decrease the standard error of $\hat{\beta}_2$ over regressions 1 and 2. In the code chunk below, use the `cor()` function, as modeled above, to find the correlation between `S` and the two variables you added on in `reg_3`.
+
+```{r}
+
+```
+
+**Based on the output from the above code chunk, does your model in `reg_3` suffer from some degree of multicollinearity?**
+
+Now let's try to use what we know about omitted variables and correlation between regressors to lower the standard errors of our parametere estimates. Return to the second regression:
+
+$$ \hat{EARNINGS}_i = \hat{\beta}_1 + \hat{\beta}_2S_i + \hat{\beta}_3EXP_i$$
+Again, in the console, use the `View()` function to look through the dataframe `wages` and try to find a variable to add to this regression that is not correlated with `S` but might still predict a person's earnings. **Which variable did you choose? Why do you think this variable causes a person's earnings to change?**
+
+**Make an argument for why you think the variable you choose is not correlated with schooling**
+
+In the code chunk below, use the `cor()` function to test for the correlation between `S` and the variable you just chose.
+
+```{r}
+
+```
+
+Again, it's nearly impossible to find two variables that have 0 correlation with each other (unless one of them is constant). **Given your above code and the fact that correlation is always between -1 and 1, (with 0 meaning no correlation), do you think that `S` and the variable you chose are significantly correlated?**
+
+**Based on your answer to the previous question and what you know about multicollinearity, what do you think will happen the standard errors of the estimated parameters if you include the variable you just chose?**
+
+Now it's time to test your hunch. In the next chunk of code, letting `YOURVAR` be the variable you chose, estimate the following regression using the `lm()` command:
+
+$$ \hat{EARNINGS}_i = \hat{\beta}_1 + \hat{\beta}_2S_i + \hat{\beta}_3EXP_i + \hat{\beta}_4YOURVAR_i$$
+Call the resulting regression object `reg_4`.
+
+```{r}
+
+```
+
+Now answer the following questions:
+
+1. **What happened to the standard errors of the estimated parameters between `reg_2` and `reg_4`? Based on what you know about multicollinearity and the correlation between your variable and `S`, why is this?**
+
+2. **Based on what you know about evaluating a regression, does this look good to you? Be sure to mention the size and sign of the estimated coefficient on S and the R-sqaured value.**
+
+3. **The variable `WEIGHT` is included in the `wages` dataset and record an individual's weight in pounds. Should `WEIGHT` be included in the regression in your opinion? What effect would adding `WEIGHT` to `reg_4` have in your opinion? (Hint: think standard errors)**
+
+That's the end of lab today. For now, replace YOUR NAME HERE with your name at the top of the document and knit your document. Upload the corresponding html to Canvas under Lab 4 and have an excellent rest of your week!
+
+
+
+
+
+

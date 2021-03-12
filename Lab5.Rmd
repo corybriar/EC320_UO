@@ -1,0 +1,104 @@
+---
+title: 'Lab 5: Functional Forms'
+author: "YOUR NAME HERE"
+date: "3/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+Most econometricians actually run dozens if not hundreds of regressions per paper, testing out different functional forms to see which model best reproduces the data or best fits theory. In the spirit of this, we are going to be running a lot of regressions today, trying to find the correct functional form for the wage equation we've worked with before. Now we have the tools to estimate a more complicated model of wage formation, so let's do it already! We'll start by investigating the logarithmic components of the regression, and then move on polynomial and interaction variables. Our goal will be to accurately characterize the impact of and additional year of schooling on earnings down the road, using many other variables to tighten up on standard errors and ease any omitted variable bias.
+
+First load in the packages we'll be needing today, `tidyverse`, `stargazer`, and `readr.`
+```{r}
+pacman::p_load(tidyverse,stargazer, readr)
+```
+
+## Part 1: Logarithmic Variables
+
+Start by loading in the data using the `read_csv()` function, and call the resulting data frame `wages`. Recall that the file name for the wage data is `EAWE01.csv` 
+```{r}
+
+```
+Let's start by thinking about how schooling `S` and income `EARNINGS` are related in this data. We've already determined that schooling should positively impact wages later on... but what is the correct functional form for our regression?
+
+Start by estimating a simple linear regression of `EARNINGS` on `S`, and call it `reg1`. We'll use this regression as a baseline to compare to later on.
+```{r}
+
+```
+
+`reg1` assumes a linear relationship between years of schooling and earnings, which is probably unrealistic. Going from 12 to 13 years of schooling realistically doesn't change some one's income too much, but going from 15 to 16 does by quite a lot, and even more so going from 16 to 20. This is more consistent with a constant elasticity as compared to a constant marginal effect. 
+
+**If we wish to estimate the impact of an additional year of schooling on wages, and we're after an elasticity, should we use a log-log regression equation or a semi-log regression? Why?** 
+
+**Based on your answer above, which variables should logged in our regression?** 
+
+Estimate the regression you specified in your answer and save it as `reg2`:
+```{r}
+
+```
+
+The following code will allow you to see both regressions side by side:
+```{r}
+stargazer(reg1, reg2, type = "text")
+```
+
+Personally, looking at these two regressions, without knowing anything else about the estimated relationship, it's not at all clear to me which of these regressions is better. Similarly believable significance on the coefficients, similar $R^2$'s... There's not much to go off of just looking at these results in terms of determining the correct model. That's why **THEORY AND INTUITION ARE SO IMPORTANT**! We could easily estimate the wrong model here and be none the wiser. 
+
+**For each regression what is the interpretation of the coefficients?** 
+
+For reference, estimate a new regression, `reg3`, in the form of `reg2`, but add in the variables `EXP` (experience), `AGE`, and `ASVABC` (an "intelligence" test score). Use `stargazer` to view them all side by side.
+```{r}
+
+```
+
+
+## Part 2: Quadratic Variables
+
+Looking at the results of `reg3`, note that the coefficient on `AGE` is negative... This is not necessarily a bad thing:
+
+- We might expect that age would have a positive effect on earnings, because older people who work tend to make more money than young people...
+- But a lot of that could be explained by experience; perhaps if two people have the same experience and one is older, they're less productive and make less money...
+
+Let's see if maybe adding a quadratic polynomial to the mix in `AGE` offers any illumination. Specifically, let's estimate
+$$
+\log(EARNINGS_i) = \beta_1 + \beta_2 S_i + \beta_3 EXP_i + \beta_4 ASVABC_i + \beta_5 AGE_i + \beta_6 {AGE_i}^2 + u_i
+$$
+We're economists though, let's see if we can sign some of these coefficients. Recall that quadratics have a U shaped profile, and that the coefficient attached to the squared term determines whether it's U shaped (positive) or hump shaped (negative). **Given what you suspect about the relationship between earnings and age, what sign do you expect $\beta_6$ to have in the above regression?** 
+
+Estimate the following regression (`reg4`), and use `stargazer` to compare it to `reg3` above. To do this, you'll need to use `mutate()` to create a new variable `AGE2 = AGE^2` and add it to `wages`:
+```{r}
+
+```
+**Since both $\beta_5$ and $\beta_6$ are statistically insignificant and of the wrong sign, should we omit them from the regression?** 
+
+The unexpected insignificance may be a function of our data source:
+```{r}
+summary(wages$AGE)
+```
+The age range in this data is 27 to 31; this data is taken from a "cohort" study, where you look at a group of people all around the same age. There's not much difference between those 5 years... certainly not enough to pick up any meaningful variation in wages by age. So likely, `AGE` does belong in the regression and is significant, we just don't have the best data to investigate it. We'll move forward keeping `AGE` and `AGE2` in our regressions.
+
+## Part 3: Interaction Variables
+
+There are some relationships in economics that are multiplicative in nature. For instance, in our model, we might suppose that schooling and being female matter idependently, but really matter together. That is, the combination of being female and highly educated has a REALLY big impact on earnings, more so than just being female or educated independently. We could try to estimate this effect using the following regression:
+
+$$
+\log(EARNINGS_i) = \beta_1 + \beta_2 S_i + \beta_3 EXP_i + \beta_4 ASVABC_i + \beta_5 AGE_i + \beta_6 {AGE_i}^2 + \beta_7 FEMALE_i + \beta_8 FEMALE \times S + u_i
+$$
+Here, the last term is an interaction term when we multiply `FEMALE` by `S`; `FEMALE` is a dummy variable equal to 1 if the individual is female and 0 otherwise. Estimate a regression without the interaction term but including `FEMALE` and call it `reg5`; add in the interaction term in `reg6`, and have a look at both regressions next to each other.
+```{r}
+
+```
+
+
+Some final questions:
+
+- **Do the signs on $\beta_7$ and $\beta_8$ make sense in both regressions?** 
+- **Can you explain why the estimates of $\beta_2$ and $\beta_7$ change so much when the interaction term $S\times FEMALE$ is included?** 
+
+
+That's the end of lab today. For now, replace YOUR NAME HERE with your name at the top of the document and knit your document. Upload the corresponding html to Canvas under Lab 5 and have an excellent rest of your week!
